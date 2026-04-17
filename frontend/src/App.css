@@ -514,24 +514,53 @@ body {
 }
 
 /*
- * 2D flip approach: scale the wrapper to scaleX(0) at the midpoint,
- * swap the content via React state, then scale back to 1.
- * This avoids preserve-3d / backface-visibility entirely and works
- * correctly in Firefox (which flattens 3D transforms inside animated
- * ancestor elements).
+ * Animation states for the 2D approach.
+ * 'flip-out' scales the card to 0 for revealing the answer.
+ * 'nav-exit' and 'nav-enter' handle sliding transitions when moving between cards.
  */
+
 .flashcard-wrapper {
   width: 100%;
   max-width: 480px;
   aspect-ratio: 3 / 2;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.15s ease-in;
+  transition: transform 0.15s ease-out;
   transform-origin: center center;
 }
 
-.flashcard-wrapper.mid-flip {
+/* Flip animation (reveal answer) */
+.flashcard-wrapper.flip-out {
   transform: scaleX(0);
+}
+
+/* Navigation animations (slide next/prev) */
+.flashcard-wrapper.nav-exit-next {
+  animation: slideExitNext 0.16s ease-in forwards;
+}
+.flashcard-wrapper.nav-exit-prev {
+  animation: slideExitPrev 0.16s ease-in forwards;
+}
+.flashcard-wrapper.nav-enter-next {
+  animation: slideEnterNext 0.2s ease-out forwards;
+}
+.flashcard-wrapper.nav-enter-prev {
+  animation: slideEnterPrev 0.2s ease-out forwards;
+}
+
+@keyframes slideExitNext {
+  to { transform: translateX(-30px); opacity: 0; }
+}
+@keyframes slideExitPrev {
+  to { transform: translateX(30px); opacity: 0; }
+}
+@keyframes slideEnterNext {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideEnterPrev {
+  from { transform: translateX(-40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 /* Single-face card — no absolute positioning, no 3D needed */

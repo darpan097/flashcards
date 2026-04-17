@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { Chapter } from '../api';
 
 interface FlashcardViewProps {
@@ -19,79 +19,82 @@ function shuffle<T>(array: T[]): T[] {
   return arr;
 }
 
-// Duration of the first half of the flip (card scales to 0), in ms.
-// Must match the CSS transition duration for .flashcard.
-const HALF_FLIP_MS = 150;
+// Animation durations — must match the CSS values below
+const FLIP_HALF_MS  = 150; // scaleX → 0, then swap, then scaleX → 1
+const NAV_EXIT_MS   = 160; // slide-out keyframe duration
+const NAV_ENTER_MS  = 200; // slide-in keyframe duration (just needs to play; we don't block)
+
+type AnimState =
+  | 'idle'
+  | 'flip-out'         // scaleX to 0 (flip reveal)
+  | 'nav-exit-next'    // slide out to the left  (going forward)
+  | 'nav-exit-prev'    // slide out to the right (going back)
+  | 'nav-enter-next'   // slide in from the right
+  | 'nav-enter-prev';  // slide in from the left
 
 export function FlashcardView({ chapter, chapterKey, onBack, answerAsFlashcard, difficultyFilter }: FlashcardViewProps) {
-  const cards = useState(() => {
+  const [cards] = useState(() => {
     const filtered = difficultyFilter === null
       ? chapter.cards
       : chapter.cards.filter((c) => c.difficult === difficultyFilter);
     return shuffle(filtered);
-  })[0];
+  });
   const total = cards.length;
 
-  const [index, setIndex] = useState(0);
+  // `index` drives the visible counter; `displayIndex` drives the card content.
+  // They diverge during navigation so the counter updates immediately while
+  // the old content is still visible during the exit animation.
+  const [index, setIndex]               = useState(0);
   const [displayIndex, setDisplayIndex] = useState(0);
-  const [flipped, setFlipped] = useState(false);
-  // true while the card is scaled to 0 (mid-flip)
-  const [midFlip, setMidFlip] = useState(false);
-  const flipping = useRef(false);
-  const navigating = useRef(false);
+  const [flipped, setFlipped]           = useState(false);
+  const [animState, setAnimState]       = useState<AnimState>('idle');
 
-  const current = cards[displayIndex];
+  const current    = cards[displayIndex];
   const frontText  = answerAsFlashcard ? current.answer : current.word;
   const backText   = answerAsFlashcard ? current.word   : current.answer;
   const frontLabel = answerAsFlashcard ? 'Answer' : 'Word';
   const backLabel  = answerAsFlashcard ? 'Word'   : 'Answer';
 
-  // 2-phase flip: scale to 0 → swap content → scale back to 1
+  // ── Flip (reveal / hide answer) ──────────────────────────────────────────
+  // Animation: scaleX 1→0 (flip-out), swap content, scaleX 0→1 (transition back)
   const flipCard = useCallback(() => {
-    if (flipping.current || navigating.current) return;
-    flipping.current = true;
-    setMidFlip(true);
+    if (animState !== 'idle') return;
+    setAnimState('flip-out');
     setTimeout(() => {
       setFlipped((f) => !f);
-      setMidFlip(false);
-      flipping.current = false;
-    }, HALF_FLIP_MS);
-  }, []);
+      setAnimState('idle'); // triggers transition back to scaleX(1)
+    }, FLIP_HALF_MS);
+  }, [animState]);
 
+  // ── Navigate (next / prev) ────────────────────────────────────────────────
+  // Animation: slide-exit → swap content → slide-enter → idle
   const goToCard = useCallback((delta: number) => {
-    if (navigating.current || flipping.current) return;
-    setIndex((i) => {
-      const next = i + delta;
-      if (next < 0 || next >= cards.length) return i;
-      navigating.current = true;
+    if (animState !== 'idle') return;
+    const next = index + delta;
+    if (next < 0 || next >= total) return;
 
-      if (flipped) {
-        // If revealed, flip back first before navigating
-        setMidFlip(true);
-        setTimeout(() => {
-          setFlipped(false);
-          setMidFlip(false);
-          setTimeout(() => {
-            setDisplayIndex(next);
-            navigating.current = false;
-          }, HALF_FLIP_MS);
-        }, HALF_FLIP_MS);
-      } else {
-        setMidFlip(true);
-        setTimeout(() => {
-          setDisplayIndex(next);
-          setMidFlip(false);
-          navigating.current = false;
-        }, HALF_FLIP_MS);
-      }
-      return next;
-    });
-  }, [cards.length, flipped]);
+    const exitState: AnimState = delta > 0 ? 'nav-exit-next' : 'nav-exit-prev';
+    const enterState: AnimState = delta > 0 ? 'nav-enter-next' : 'nav-enter-prev';
 
-  const goToNext = useCallback(() => goToCard(1), [goToCard]);
+    setIndex(next);           // counter updates immediately
+    setAnimState(exitState);
+
+    setTimeout(() => {
+      setFlipped(false);      // always start new card face-up
+      setDisplayIndex(next);  // swap content at the mid-point (while opacity is 0)
+      setAnimState(enterState);
+
+      setTimeout(() => {
+        setAnimState('idle');
+      }, NAV_ENTER_MS);
+    }, NAV_EXIT_MS);
+  }, [animState, index, total]);
+
+  const goToNext = useCallback(() => goToCard(1),  [goToCard]);
   const goToPrev = useCallback(() => goToCard(-1), [goToCard]);
 
-  // Keyboard shortcuts: Enter = flip, Shift+Enter = next, arrows = navigate
+  // ── Keyboard shortcuts ────────────────────────────────────────────────────
+  // Enter = flip · Shift+Enter = next · ←/↑ = prev · →/↓ = next
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
@@ -110,6 +113,9 @@ export function FlashcardView({ chapter, chapterKey, onBack, answerAsFlashcard, 
     return () => window.removeEventListener('keydown', handler);
   }, [flipCard, goToNext, goToPrev]);
 
+  // Map animState to a CSS class on the wrapper
+  const wrapperClass = animState === 'idle' ? 'flashcard-wrapper' : `flashcard-wrapper ${animState}`;
+
   return (
     <section className="view view-flashcard">
       <header className="top-bar">
@@ -124,7 +130,7 @@ export function FlashcardView({ chapter, chapterKey, onBack, answerAsFlashcard, 
 
       <div className="flashcard-area">
         <div
-          className={`flashcard-wrapper${midFlip ? ' mid-flip' : ''}`}
+          className={wrapperClass}
           onClick={flipCard}
           role="button"
           tabIndex={0}
