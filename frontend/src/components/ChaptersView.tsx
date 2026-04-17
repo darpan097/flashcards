@@ -4,9 +4,11 @@ interface ChaptersViewProps {
   data: SheetData;
   onSelect: (chapterKey: string) => void;
   onBack: () => void;
+  answerAsFlashcard: boolean;
+  onToggleFlip: () => void;
 }
 
-export function ChaptersView({ data, onSelect, onBack }: ChaptersViewProps) {
+export function ChaptersView({ data, onSelect, onBack, answerAsFlashcard, onToggleFlip }: ChaptersViewProps) {
   const chapterKeys = Object.keys(data.chapters);
 
   return (
@@ -18,7 +20,17 @@ export function ChaptersView({ data, onSelect, onBack }: ChaptersViewProps) {
           </svg>
         </button>
         <h2>Select a Chapter</h2>
-        <div style={{ width: 20 }} />
+        <button
+          id="btn-toggle-flip"
+          className={`flip-toggle ${answerAsFlashcard ? 'active' : ''}`}
+          onClick={onToggleFlip}
+          title={answerAsFlashcard ? 'Showing: Answer → Front' : 'Showing: Word → Front'}
+        >
+          <span className="flip-toggle-icon">⇄</span>
+          <span className="flip-toggle-label">
+            {answerAsFlashcard ? 'Answer as card' : 'Word as card'}
+          </span>
+        </button>
       </header>
 
       <div className="chapters-grid">

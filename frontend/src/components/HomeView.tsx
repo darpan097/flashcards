@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchSheet } from '../api';
 import type { SheetData } from '../api';
+
+const STORAGE_KEY = 'flashcards_sheet_url';
 
 interface HomeViewProps {
   onLoaded: (data: SheetData) => void;
@@ -10,6 +12,12 @@ export function HomeView({ onLoaded }: HomeViewProps) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Pre-fill with last used URL
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) setUrl(saved);
+  }, []);
 
   const handleLoad = async () => {
     if (!url.trim()) {
@@ -22,6 +30,7 @@ export function HomeView({ onLoaded }: HomeViewProps) {
 
     try {
       const data = await fetchSheet(url.trim());
+      localStorage.setItem(STORAGE_KEY, url.trim());
       onLoaded(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load sheet');
@@ -33,6 +42,13 @@ export function HomeView({ onLoaded }: HomeViewProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleLoad();
   };
+
+  const handleClear = () => {
+    setUrl('');
+    localStorage.removeItem(STORAGE_KEY);
+  };
+
+  const hasSavedUrl = !!localStorage.getItem(STORAGE_KEY);
 
   return (
     <section className="view view-home">
@@ -49,7 +65,14 @@ export function HomeView({ onLoaded }: HomeViewProps) {
         </div>
 
         <div className="input-card">
-          <label htmlFor="sheet-url">Google Sheets Link</label>
+          <div className="input-label-row">
+            <label htmlFor="sheet-url">Google Sheets Link</label>
+            {hasSavedUrl && (
+              <button className="clear-url-btn" onClick={handleClear} title="Clear saved URL">
+                Clear saved
+              </button>
+            )}
+          </div>
           <div className="input-row">
             <input
               type="url"

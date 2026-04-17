@@ -164,6 +164,30 @@ body {
   letter-spacing: 0.06em;
 }
 
+.input-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.clear-url-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--transition-fast);
+}
+
+.clear-url-btn:hover {
+  color: var(--error);
+}
+
 .input-row {
   display: flex;
   gap: 0.75rem;
@@ -318,6 +342,45 @@ body {
   border: 1px solid var(--surface-border);
 }
 
+/* ============= FLIP TOGGLE ============= */
+.flip-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 100px;
+  color: var(--text-secondary);
+  padding: 0.35rem 0.85rem 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.flip-toggle:hover {
+  background: var(--surface-hover);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+}
+
+.flip-toggle.active {
+  background: rgba(108, 99, 255, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.flip-toggle-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.flip-toggle-label {
+  line-height: 1;
+}
+
 /* ============= CHAPTERS VIEW ============= */
 .chapters-grid {
   flex: 1;
@@ -392,33 +455,31 @@ body {
   gap: 1.25rem;
 }
 
+/*
+ * 2D flip approach: scale the wrapper to scaleX(0) at the midpoint,
+ * swap the content via React state, then scale back to 1.
+ * This avoids preserve-3d / backface-visibility entirely and works
+ * correctly in Firefox (which flattens 3D transforms inside animated
+ * ancestor elements).
+ */
 .flashcard-wrapper {
   width: 100%;
   max-width: 480px;
   aspect-ratio: 3 / 2;
-  perspective: 1000px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease-in;
+  transform-origin: center center;
 }
 
-.flashcard {
+.flashcard-wrapper.mid-flip {
+  transform: scaleX(0);
+}
+
+/* Single-face card — no absolute positioning, no 3D needed */
+.flashcard-face {
   width: 100%;
   height: 100%;
-  position: relative;
-  transform-style: preserve-3d;
-  transition: transform var(--transition-slow);
-}
-
-.flashcard-wrapper.flipped .flashcard {
-  transform: rotateY(180deg);
-}
-
-.flashcard-front,
-.flashcard-back {
-  position: absolute;
-  inset: 0;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
   border-radius: var(--radius-xl);
   display: flex;
   flex-direction: column;
@@ -427,21 +488,18 @@ body {
   padding: 2rem;
   gap: 1rem;
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
 
 .flashcard-front {
-  background: linear-gradient(160deg, rgba(108, 99, 255, 0.15) 0%, rgba(0, 212, 170, 0.08) 100%);
-  border: 1px solid rgba(108, 99, 255, 0.25);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: linear-gradient(160deg, rgba(108, 99, 255, 0.18) 0%, rgba(0, 212, 170, 0.10) 100%);
+  border: 1px solid rgba(108, 99, 255, 0.35);
 }
 
 .flashcard-back {
-  background: linear-gradient(160deg, rgba(0, 212, 170, 0.15) 0%, rgba(108, 99, 255, 0.08) 100%);
-  border: 1px solid rgba(0, 212, 170, 0.25);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  transform: rotateY(180deg);
+  background: linear-gradient(160deg, rgba(0, 212, 170, 0.18) 0%, rgba(108, 99, 255, 0.10) 100%);
+  border: 1px solid rgba(0, 212, 170, 0.35);
 }
 
 .card-label {

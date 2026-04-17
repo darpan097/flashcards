@@ -11,6 +11,8 @@ function App() {
   const [view, setView] = useState<View>('home');
   const [sheetData, setSheetData] = useState<SheetData | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<string>('');
+  // true = answer column is shown as the flashcard front (default)
+  const [answerAsFlashcard, setAnswerAsFlashcard] = useState<boolean>(true);
 
   const handleSheetLoaded = (data: SheetData) => {
     setSheetData(data);
@@ -42,6 +44,8 @@ function App() {
           data={sheetData}
           onSelect={handleChapterSelected}
           onBack={handleBackToHome}
+          answerAsFlashcard={answerAsFlashcard}
+          onToggleFlip={() => setAnswerAsFlashcard((v) => !v)}
         />
       )}
       {view === 'flashcard' && sheetData && (
@@ -49,6 +53,7 @@ function App() {
           chapter={sheetData.chapters[selectedChapter]}
           chapterKey={selectedChapter}
           onBack={handleBackToChapters}
+          answerAsFlashcard={answerAsFlashcard}
         />
       )}
     </div>

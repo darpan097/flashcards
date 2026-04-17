@@ -1,10 +1,11 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Chapter } from '../api';
 
 interface FlashcardViewProps {
   chapter: Chapter;
   chapterKey: string;
   onBack: () => void;
+  answerAsFlashcard: boolean;
 }
 
 /** Fisher-Yates shuffle */
@@ -17,50 +18,91 @@ function shuffle<T>(array: T[]): T[] {
   return arr;
 }
 
-export function FlashcardView({ chapter, chapterKey, onBack }: FlashcardViewProps) {
-  const cards = useMemo(() => shuffle(chapter.cards), [chapter]);
-  const [index, setIndex] = useState(0);
-  const [flipped, setFlipped] = useState(false);
+// Duration of the first half of the flip (card scales to 0), in ms.
+// Must match the CSS transition duration for .flashcard.
+const HALF_FLIP_MS = 150;
 
-  const current = cards[index];
+export function FlashcardView({ chapter, chapterKey, onBack, answerAsFlashcard }: FlashcardViewProps) {
+  const cards = useState(() => shuffle(chapter.cards))[0];
   const total = cards.length;
 
+  const [index, setIndex] = useState(0);
+  const [displayIndex, setDisplayIndex] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  // true while the card is scaled to 0 (mid-flip)
+  const [midFlip, setMidFlip] = useState(false);
+  const flipping = useRef(false);
+  const navigating = useRef(false);
+
+  const current = cards[displayIndex];
+  const frontText  = answerAsFlashcard ? current.answer : current.word;
+  const backText   = answerAsFlashcard ? current.word   : current.answer;
+  const frontLabel = answerAsFlashcard ? 'Answer' : 'Word';
+  const backLabel  = answerAsFlashcard ? 'Word'   : 'Answer';
+
+  // 2-phase flip: scale to 0 → swap content → scale back to 1
   const flipCard = useCallback(() => {
-    setFlipped((f) => !f);
+    if (flipping.current || navigating.current) return;
+    flipping.current = true;
+    setMidFlip(true);
+    setTimeout(() => {
+      setFlipped((f) => !f);
+      setMidFlip(false);
+      flipping.current = false;
+    }, HALF_FLIP_MS);
   }, []);
 
-  const nextCard = useCallback(() => {
-    if (index < total - 1) {
-      setFlipped(false);
-      // Small delay so flip-back animation plays before content changes
-      setTimeout(() => setIndex((i) => i + 1), 150);
-    }
-  }, [index, total]);
+  const goToCard = useCallback((delta: number) => {
+    if (navigating.current || flipping.current) return;
+    setIndex((i) => {
+      const next = i + delta;
+      if (next < 0 || next >= cards.length) return i;
+      navigating.current = true;
 
-  const prevCard = useCallback(() => {
-    if (index > 0) {
-      setFlipped(false);
-      setTimeout(() => setIndex((i) => i - 1), 150);
-    }
-  }, [index]);
+      if (flipped) {
+        // If revealed, flip back first before navigating
+        setMidFlip(true);
+        setTimeout(() => {
+          setFlipped(false);
+          setMidFlip(false);
+          setTimeout(() => {
+            setDisplayIndex(next);
+            navigating.current = false;
+          }, HALF_FLIP_MS);
+        }, HALF_FLIP_MS);
+      } else {
+        setMidFlip(true);
+        setTimeout(() => {
+          setDisplayIndex(next);
+          setMidFlip(false);
+          navigating.current = false;
+        }, HALF_FLIP_MS);
+      }
+      return next;
+    });
+  }, [cards.length, flipped]);
 
-  // Keyboard navigation
+  const goToNext = useCallback(() => goToCard(1), [goToCard]);
+  const goToPrev = useCallback(() => goToCard(-1), [goToCard]);
+
+  // Keyboard shortcuts: Enter = flip, Shift+Enter = next, arrows = navigate
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === ' ' || e.key === 'Enter') {
+      if (e.key === 'Enter') {
         e.preventDefault();
-        flipCard();
+        if (e.shiftKey) goToNext();
+        else flipCard();
       } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
         e.preventDefault();
-        nextCard();
+        goToNext();
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
         e.preventDefault();
-        prevCard();
+        goToPrev();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [flipCard, nextCard, prevCard]);
+  }, [flipCard, goToNext, goToPrev]);
 
   return (
     <section className="view view-flashcard">
@@ -76,25 +118,28 @@ export function FlashcardView({ chapter, chapterKey, onBack }: FlashcardViewProp
 
       <div className="flashcard-area">
         <div
-          className={`flashcard-wrapper ${flipped ? 'flipped' : ''}`}
+          className={`flashcard-wrapper${midFlip ? ' mid-flip' : ''}`}
           onClick={flipCard}
           role="button"
           tabIndex={0}
           aria-label={flipped ? 'Answer revealed, click to hide' : 'Click to reveal answer'}
         >
-          <div className="flashcard">
-            <div className="flashcard-front">
-              <span className="card-label">Word</span>
-              <p className="card-content">{current.word}</p>
+          {!flipped ? (
+            <div className="flashcard-face flashcard-front">
+              <span className="card-label">{frontLabel}</span>
+              <p className="card-content">{frontText}</p>
             </div>
-            <div className="flashcard-back">
-              <span className="card-label">Answer</span>
-              <p className="card-content">{current.answer}</p>
+          ) : (
+            <div className="flashcard-face flashcard-back">
+              <span className="card-label">{backLabel}</span>
+              <p className="card-content">{backText}</p>
             </div>
-          </div>
+          )}
         </div>
         <p className="flip-hint">
-          {flipped ? 'Tap again to hide answer' : 'Tap the card to reveal the answer'}
+          {flipped
+            ? 'Tap again to hide · Shift+Enter for next'
+            : 'Tap or press Enter to reveal'}
         </p>
       </div>
 
@@ -102,7 +147,7 @@ export function FlashcardView({ chapter, chapterKey, onBack }: FlashcardViewProp
         <button
           className="ctrl-btn"
           id="btn-prev"
-          onClick={prevCard}
+          onClick={goToPrev}
           disabled={index === 0}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
@@ -113,7 +158,7 @@ export function FlashcardView({ chapter, chapterKey, onBack }: FlashcardViewProp
         <button
           className={`ctrl-btn primary ${index === total - 1 ? 'done' : ''}`}
           id="btn-next"
-          onClick={nextCard}
+          onClick={goToNext}
           disabled={index === total - 1}
         >
           <span>{index === total - 1 ? 'Done!' : 'Next'}</span>
