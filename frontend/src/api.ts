@@ -1,6 +1,7 @@
 export interface FlashCard {
   word: string;
   answer: string;
+  difficult: number | null;
 }
 
 export interface Chapter {

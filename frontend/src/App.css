@@ -381,6 +381,47 @@ body {
   line-height: 1;
 }
 
+/* Group that holds difficulty select + flip toggle in the top bar */
+.top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* -------- Difficulty dropdown -------- */
+.difficulty-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(240,240,248,0.5)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 0.6rem center;
+  border: 1px solid var(--surface-border);
+  border-radius: 100px;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.35rem 1.9rem 0.35rem 0.85rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.difficulty-select:hover {
+  background-color: var(--surface-hover);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+}
+
+.difficulty-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.difficulty-select option {
+  background: #1a1a2e;
+  color: var(--text-primary);
+}
+
 /* ============= CHAPTERS VIEW ============= */
 .chapters-grid {
   flex: 1;
@@ -442,6 +483,23 @@ body {
   background: rgba(255, 255, 255, 0.05);
   padding: 0.2rem 0.65rem;
   border-radius: 100px;
+}
+
+.chapter-card.dimmed {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.chapter-difficulty-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-secondary);
+  background: rgba(0, 212, 170, 0.1);
+  border: 1px solid rgba(0, 212, 170, 0.25);
+  padding: 0.15rem 0.55rem;
+  border-radius: 100px;
+  letter-spacing: 0.04em;
 }
 
 /* ============= FLASHCARD VIEW ============= */

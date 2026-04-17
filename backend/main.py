@@ -37,7 +37,8 @@ def extract_sheet_id(url: str) -> str:
 def parse_csv_data(csv_text: str) -> dict[str, Any]:
     """Parse CSV data from Google Sheets into structured chapters.
 
-    Expected format (first 3 columns): chapter_number, word, answer
+    Expected columns: chapter_number, word, answer[, difficult]
+    The optional 4th column 'difficult' is an integer (0-3) or blank (null).
     Extra columns and empty rows are ignored.
     """
     reader = csv.reader(io.StringIO(csv_text))
@@ -49,7 +50,7 @@ def parse_csv_data(csv_text: str) -> dict[str, Any]:
     # Skip header row (first row)
     data_rows = rows[1:]
 
-    chapters: dict[str, list[dict[str, str]]] = {}
+    chapters: dict[str, list[dict[str, Any]]] = {}
 
     for row in data_rows:
         # Need at least 3 columns
@@ -64,10 +65,20 @@ def parse_csv_data(csv_text: str) -> dict[str, Any]:
         if not chapter or not word or not answer:
             continue
 
+        # Parse optional 4th column: difficulty (int 0-3, or None if blank)
+        difficult: int | None = None
+        if len(row) >= 4:
+            raw = row[3].strip()
+            if raw:
+                try:
+                    difficult = int(raw)
+                except ValueError:
+                    difficult = None
+
         if chapter not in chapters:
             chapters[chapter] = []
 
-        chapters[chapter].append({"word": word, "answer": answer})
+        chapters[chapter].append({"word": word, "answer": answer, "difficult": difficult})
 
     if not chapters:
         raise ValueError("No valid flashcard data found in the sheet")

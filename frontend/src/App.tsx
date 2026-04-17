@@ -13,6 +13,8 @@ function App() {
   const [selectedChapter, setSelectedChapter] = useState<string>('');
   // true = answer column is shown as the flashcard front (default)
   const [answerAsFlashcard, setAnswerAsFlashcard] = useState<boolean>(true);
+  // null = show all difficulties; number = show only that difficulty level
+  const [difficultyFilter, setDifficultyFilter] = useState<number | null>(null);
 
   const handleSheetLoaded = (data: SheetData) => {
     setSheetData(data);
@@ -46,6 +48,8 @@ function App() {
           onBack={handleBackToHome}
           answerAsFlashcard={answerAsFlashcard}
           onToggleFlip={() => setAnswerAsFlashcard((v) => !v)}
+          difficultyFilter={difficultyFilter}
+          onDifficultyChange={setDifficultyFilter}
         />
       )}
       {view === 'flashcard' && sheetData && (
@@ -54,6 +58,7 @@ function App() {
           chapterKey={selectedChapter}
           onBack={handleBackToChapters}
           answerAsFlashcard={answerAsFlashcard}
+          difficultyFilter={difficultyFilter}
         />
       )}
     </div>

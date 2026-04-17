@@ -6,6 +6,7 @@ interface FlashcardViewProps {
   chapterKey: string;
   onBack: () => void;
   answerAsFlashcard: boolean;
+  difficultyFilter: number | null;
 }
 
 /** Fisher-Yates shuffle */
@@ -22,8 +23,13 @@ function shuffle<T>(array: T[]): T[] {
 // Must match the CSS transition duration for .flashcard.
 const HALF_FLIP_MS = 150;
 
-export function FlashcardView({ chapter, chapterKey, onBack, answerAsFlashcard }: FlashcardViewProps) {
-  const cards = useState(() => shuffle(chapter.cards))[0];
+export function FlashcardView({ chapter, chapterKey, onBack, answerAsFlashcard, difficultyFilter }: FlashcardViewProps) {
+  const cards = useState(() => {
+    const filtered = difficultyFilter === null
+      ? chapter.cards
+      : chapter.cards.filter((c) => c.difficult === difficultyFilter);
+    return shuffle(filtered);
+  })[0];
   const total = cards.length;
 
   const [index, setIndex] = useState(0);
