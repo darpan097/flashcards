@@ -124,7 +124,7 @@ export function FlashcardView({ chapter, chapterKey, onBack, answerAsFlashcard, 
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <h2>Chapter {chapterKey}</h2>
+        <h2>{chapterKey === 'All' ? 'All Chapters' : `Chapter ${chapterKey}`}</h2>
         <span className="card-counter">{index + 1} / {total}</span>
       </header>
 

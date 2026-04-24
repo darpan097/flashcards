@@ -3,7 +3,7 @@ import './App.css';
 import { HomeView } from './components/HomeView';
 import { ChaptersView } from './components/ChaptersView';
 import { FlashcardView } from './components/FlashcardView';
-import type { SheetData } from './api';
+import type { SheetData, Chapter } from './api';
 
 type View = 'home' | 'chapters' | 'flashcard';
 
@@ -15,6 +15,7 @@ function App() {
   const [answerAsFlashcard, setAnswerAsFlashcard] = useState<boolean>(true);
   // null = show all difficulties; number = show only that difficulty level
   const [difficultyFilter, setDifficultyFilter] = useState<number | null>(null);
+  const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
 
   const handleSheetLoaded = (data: SheetData) => {
     setSheetData(data);
@@ -22,7 +23,18 @@ function App() {
   };
 
   const handleChapterSelected = (chapterKey: string) => {
+    if (!sheetData) return;
     setSelectedChapter(chapterKey);
+    setActiveChapter(sheetData.chapters[chapterKey]);
+    setView('flashcard');
+  };
+
+  const handleAllChapters = () => {
+    if (!sheetData) return;
+    // Merge all cards from every chapter into one synthetic chapter
+    const allCards = Object.values(sheetData.chapters).flatMap((ch) => ch.cards);
+    setSelectedChapter('All');
+    setActiveChapter({ name: 'All Chapters', cardCount: allCards.length, cards: allCards });
     setView('flashcard');
   };
 
@@ -30,11 +42,13 @@ function App() {
     setView('home');
     setSheetData(null);
     setSelectedChapter('');
+    setActiveChapter(null);
   };
 
   const handleBackToChapters = () => {
     setView('chapters');
     setSelectedChapter('');
+    setActiveChapter(null);
   };
 
   return (
@@ -45,6 +59,7 @@ function App() {
         <ChaptersView
           data={sheetData}
           onSelect={handleChapterSelected}
+          onSelectAll={handleAllChapters}
           onBack={handleBackToHome}
           answerAsFlashcard={answerAsFlashcard}
           onToggleFlip={() => setAnswerAsFlashcard((v) => !v)}
@@ -52,9 +67,9 @@ function App() {
           onDifficultyChange={setDifficultyFilter}
         />
       )}
-      {view === 'flashcard' && sheetData && (
+      {view === 'flashcard' && activeChapter && (
         <FlashcardView
-          chapter={sheetData.chapters[selectedChapter]}
+          chapter={activeChapter}
           chapterKey={selectedChapter}
           onBack={handleBackToChapters}
           answerAsFlashcard={answerAsFlashcard}

@@ -610,10 +610,12 @@ body {
 }
 
 .flashcard-back .card-content {
+  color: var(--accent-secondary);
   background: linear-gradient(135deg, var(--accent-secondary), #6cf0d2);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  /* Fallback: if gradient-clip isn't supported, the color above shows */
 }
 
 .flip-hint {
@@ -678,6 +680,53 @@ body {
 .ctrl-btn.primary.done {
   background: linear-gradient(135deg, var(--accent-secondary), #6cf0d2);
   color: #0a0a1a;
+}
+
+/* ============= START ALL CHAPTERS BAR ============= */
+.chapters-all-bar {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 1.5rem 2rem;
+}
+
+.btn-start-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  border: none;
+  border-radius: var(--radius-md);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.85rem 2rem;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+  letter-spacing: -0.01em;
+}
+
+.btn-start-all:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.btn-start-all:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-start-all:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-start-all-count {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 100px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
+  letter-spacing: 0;
 }
 
 /* ============= RESPONSIVE ============= */

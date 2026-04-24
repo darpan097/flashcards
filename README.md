@@ -5,7 +5,7 @@ Learn any language with flashcards powered by Google Sheets.
 ## Quick Start (Docker)
 
 ```bash
-docker compose up --build
+docker compose up --build --force-recreate
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -35,8 +35,8 @@ The frontend dev server proxies `/api` requests to `http://localhost:8000`.
 Your Google Sheet must be **shared publicly** ("Anyone with the link → Viewer") and have these columns:
 
 | Column 1 | Column 2 | Column 3 |
-|-----------|----------|----------|
-| Chapter   | Word     | Answer   |
+| -------- | -------- | -------- |
+| Chapter  | Word     | Answer   |
 
 Example: `2.02`, `de schoonmaakster`, `the cleaning lady`
 

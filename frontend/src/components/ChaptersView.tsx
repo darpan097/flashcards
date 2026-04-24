@@ -4,6 +4,7 @@ import type { SheetData } from '../api';
 interface ChaptersViewProps {
   data: SheetData;
   onSelect: (chapterKey: string) => void;
+  onSelectAll: () => void;
   onBack: () => void;
   answerAsFlashcard: boolean;
   onToggleFlip: () => void;
@@ -21,6 +22,7 @@ const DIFFICULTY_LABELS: Record<number, string> = {
 export function ChaptersView({
   data,
   onSelect,
+  onSelectAll,
   onBack,
   answerAsFlashcard,
   onToggleFlip,
@@ -53,6 +55,11 @@ export function ChaptersView({
     }
     return counts;
   }, [chapterKeys, data, difficultyFilter]);
+
+  // Total cards across all chapters matching the current filter
+  const totalFilteredCards = useMemo(() => {
+    return Object.values(filteredCardCounts).reduce((sum, n) => sum + n, 0);
+  }, [filteredCardCounts]);
 
   const hasDifficultyData = availableDifficulties.length > 0;
 
@@ -120,6 +127,24 @@ export function ChaptersView({
             </button>
           );
         })}
+      </div>
+
+      {/* Start All Chapters button */}
+      <div className="chapters-all-bar">
+        <button
+          id="btn-start-all"
+          className="btn-start-all"
+          onClick={onSelectAll}
+          disabled={totalFilteredCards === 0}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+          Start All Chapters
+          <span className="btn-start-all-count">
+            {totalFilteredCards} cards
+          </span>
+        </button>
       </div>
     </section>
   );
