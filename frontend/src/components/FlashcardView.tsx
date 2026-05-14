@@ -7,6 +7,8 @@ interface FlashcardViewProps {
   onBack: () => void;
   answerAsFlashcard: boolean;
   difficultyFilter: number | null;
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
 }
 
 /** Fisher-Yates shuffle */
@@ -32,7 +34,7 @@ type AnimState =
   | 'nav-enter-next'   // slide in from the right
   | 'nav-enter-prev';  // slide in from the left
 
-export function FlashcardView({ chapter, chapterKey, onBack, answerAsFlashcard, difficultyFilter }: FlashcardViewProps) {
+export function FlashcardView({ chapter, chapterKey, onBack, answerAsFlashcard, difficultyFilter, theme, onToggleTheme }: FlashcardViewProps) {
   const [cards] = useState(() => {
     const filtered = difficultyFilter === null
       ? chapter.cards
@@ -125,7 +127,18 @@ export function FlashcardView({ chapter, chapterKey, onBack, answerAsFlashcard, 
           </svg>
         </button>
         <h2>{chapterKey === 'All' ? 'All Chapters' : `Chapter ${chapterKey}`}</h2>
-        <span className="card-counter">{index + 1} / {total}</span>
+        <div className="top-bar-actions">
+          <span className="card-counter">{index + 1} / {total}</span>
+          <button
+            id="btn-theme-toggle-flashcard"
+            className="theme-toggle"
+            onClick={onToggleTheme}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+        </div>
       </header>
 
       <div className="flashcard-area">

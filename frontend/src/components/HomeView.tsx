@@ -6,9 +6,11 @@ const STORAGE_KEY = 'flashcards_sheet_url';
 
 interface HomeViewProps {
   onLoaded: (data: SheetData) => void;
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
 }
 
-export function HomeView({ onLoaded }: HomeViewProps) {
+export function HomeView({ onLoaded, theme, onToggleTheme }: HomeViewProps) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -52,6 +54,17 @@ export function HomeView({ onLoaded }: HomeViewProps) {
 
   return (
     <section className="view view-home">
+      {/* Theme toggle — fixed in top-right since there's no top bar on home */}
+      <button
+        id="btn-theme-toggle-home"
+        className="theme-toggle theme-toggle-fixed"
+        onClick={onToggleTheme}
+        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {theme === 'dark' ? '☀️' : '🌙'}
+      </button>
+
       <div className="home-container">
         <div className="logo-area">
           <div className="logo-icon">

@@ -10,6 +10,8 @@ interface ChaptersViewProps {
   onToggleFlip: () => void;
   difficultyFilter: number | null;
   onDifficultyChange: (v: number | null) => void;
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
 }
 
 const DIFFICULTY_LABELS: Record<number, string> = {
@@ -28,6 +30,8 @@ export function ChaptersView({
   onToggleFlip,
   difficultyFilter,
   onDifficultyChange,
+  theme,
+  onToggleTheme,
 }: ChaptersViewProps) {
   const chapterKeys = Object.keys(data.chapters);
 
@@ -100,6 +104,15 @@ export function ChaptersView({
             <span className="flip-toggle-label">
               {answerAsFlashcard ? 'Answer as card' : 'Word as card'}
             </span>
+          </button>
+          <button
+            id="btn-theme-toggle-chapters"
+            className="theme-toggle"
+            onClick={onToggleTheme}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
           </button>
         </div>
       </header>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import { HomeView } from './components/HomeView';
 import { ChaptersView } from './components/ChaptersView';
@@ -6,6 +6,9 @@ import { FlashcardView } from './components/FlashcardView';
 import type { SheetData, Chapter } from './api';
 
 type View = 'home' | 'chapters' | 'flashcard';
+type Theme = 'dark' | 'light';
+
+const THEME_KEY = 'flashcards_theme';
 
 function App() {
   const [view, setView] = useState<View>('home');
@@ -16,6 +19,17 @@ function App() {
   // null = show all difficulties; number = show only that difficulty level
   const [difficultyFilter, setDifficultyFilter] = useState<number | null>(null);
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
+  const [theme, setTheme] = useState<Theme>(
+    () => (localStorage.getItem(THEME_KEY) as Theme) ?? 'dark'
+  );
+
+  // Sync body background for elements outside .app
+  useEffect(() => {
+    document.body.classList.toggle('theme-light', theme === 'light');
+    localStorage.setItem(THEME_KEY, theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
   const handleSheetLoaded = (data: SheetData) => {
     setSheetData(data);
@@ -52,9 +66,11 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div className="app" data-theme={theme}>
       <div className="bg-gradient" />
-      {view === 'home' && <HomeView onLoaded={handleSheetLoaded} />}
+      {view === 'home' && (
+        <HomeView onLoaded={handleSheetLoaded} theme={theme} onToggleTheme={toggleTheme} />
+      )}
       {view === 'chapters' && sheetData && (
         <ChaptersView
           data={sheetData}
@@ -65,6 +81,8 @@ function App() {
           onToggleFlip={() => setAnswerAsFlashcard((v) => !v)}
           difficultyFilter={difficultyFilter}
           onDifficultyChange={setDifficultyFilter}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
       )}
       {view === 'flashcard' && activeChapter && (
@@ -74,6 +92,8 @@ function App() {
           onBack={handleBackToChapters}
           answerAsFlashcard={answerAsFlashcard}
           difficultyFilter={difficultyFilter}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
       )}
     </div>
